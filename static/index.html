@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eKYC Digital Signature - Hệ Thống Chữ Ký Số Sinh Trắc Học</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cobalt: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#0f172a'
+            },
+            accentOrange: {
+              50: '#fff7ed',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b1120;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .panel-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-cobalt-700 flex items-center justify-center text-white shadow-sm">
+          <i class="fa-solid fa-file-signature text-base"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-white">eKYC Digital Signer</h1>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-accentOrange-600/20 text-accentOrange-500 border border-accentOrange-500/30">Enterprise PKI</span>
+          </div>
+          <p class="text-xs text-slate-400">Xác thực khuôn mặt & Chữ ký số bất đối xứng RSA-2048 trên tài liệu PDF</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex gap-1.5">
+        <button onclick="switchTab('sign-pdf')" id="tab-btn-sign-pdf" class="tab-btn active px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cobalt-700 text-white transition-all shadow-sm">
+          <i class="fa-solid fa-stamp mr-1.5"></i> Ký Số PDF
+        </button>
+        <button onclick="switchTab('verify-pdf')" id="tab-btn-verify-pdf" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-shield-check mr-1.5"></i> Kiểm Tra Tính Toàn Vẹn
+        </button>
+        <button onclick="switchTab('assets')" id="tab-btn-assets" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-signature mr-1.5"></i> Kho Dấu & Chữ Ký
+        </button>
+        <button onclick="switchTab('ekyc-scan')" id="tab-btn-ekyc-scan" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-user-check mr-1.5"></i> eKYC & Đăng Ký
+        </button>
+        <button onclick="switchTab('audit-logs')" id="tab-btn-audit-logs" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Nhật Ký Ký Số
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- ==================== TAB 1: KÝ SỐ PDF VỚI eKYC ==================== -->
+    <div id="tab-sign-pdf" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Column: Document & Stamp Coordinates Configuration -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <div class="panel-card p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-cobalt-500"></i> 1. Cấu Hình Tài Liệu PDF & Vị Trí Ký
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">Chọn tệp PDF, con dấu/chữ ký và tọa độ cần chèn vào trang</p>
+            </div>
+            <button onclick="loadSampleContract()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 border border-slate-700 transition-all">
+              <i class="fa-solid fa-file-contract text-accentOrange-500 mr-1"></i> Dùng hợp đồng mẫu
+            </button>
+          </div>
+
+          <!-- Document Upload / Select -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tệp PDF Cần Ký *</label>
+              <label class="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 border-dashed rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
+                <i class="fa-solid fa-upload text-cobalt-500"></i> <span id="pdf-file-label">Chọn tệp PDF từ máy...</span>
+                <input type="file" id="pdf-input-file" accept="application/pdf" class="hidden" onchange="handlePdfUpload(event)">
+              </label>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Người Ký (Chủ sở hữu con dấu) *</label>
+              <select id="select-signer-user" onchange="onSignerChange()" class="w-full py-2 px-3 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Select Stamp or Signature Asset -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Con Dấu Hoặc Chữ Ký Được Ủy Quyền *</label>
+            <div id="assets-selection-grid" class="grid grid-cols-3 gap-3">
+              <!-- Dynamically populated stamps and signatures -->
+            </div>
+          </div>
+
+          <!-- Stamp Coordinates Placement Form -->
+          <div class="p-3.5 bg-slate-900/80 rounded-lg border border-slate-800 flex flex-col gap-2">
+            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-crosshairs text-accentOrange-500"></i> Tọa Độ Định Vị Con Dấu / Chữ Ký Trên PDF
+            </span>
+            <div class="grid grid-cols-5 gap-2 text-xs">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Trang số</label>
+                <input type="number" id="coord-page" value="1" min="1" class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Tọa độ X (pt)</label>
+                <input type="number" id="coord-x" value="380" class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Tọa độ Y (pt)</label>
+                <input type="number" id="coord-y" value="420" class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Chiều rộng (W)</label>
+                <input type="number" id="coord-w" value="140" class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Chiều cao (H)</label>
+                <input type="number" id="coord-h" value="70" class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-center">
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">
+              * Tọa độ tính theo chuẩn PostScript Points ($1 \text{ inch} = 72 \text{ pt}$). Vị trí mặc định: góc ký đại diện bên phải của hợp đồng.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: eKYC Biometric Gatekeeper & Sign Execution -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <div class="panel-card p-5 flex flex-col gap-4">
+          <div class="border-b border-slate-800 pb-2">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-user-shield text-accentOrange-500"></i> 2. Xác Thực eKYC Người Ký
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Khóa bí mật (Private Key) chỉ mở khóa khi nhận diện đúng khuôn mặt</p>
+          </div>
+
+          <!-- Webcam Frame with Live AI Face Tracking -->
+          <div class="relative w-full aspect-[4/3] bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+            <video id="sign-webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            <canvas id="sign-webcam-overlay" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            <img id="sign-webcam-preview" class="w-full h-full object-contain hidden" />
+            <div class="absolute bottom-2.5 left-2.5 bg-slate-900/90 px-2.5 py-1 rounded text-[11px] border border-slate-800 flex items-center gap-1.5 shadow-md">
+              <span id="ekyc-auth-dot" class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></span>
+              <span id="ekyc-auth-badge" class="font-semibold text-slate-300">Đang khởi động camera eKYC...</span>
+            </div>
+            <div id="ekyc-tracking-tag" class="absolute top-2.5 right-2.5 hidden bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-1">
+              <i class="fa-solid fa-face-smile"></i> <span id="ekyc-tracking-score">95%</span>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" onclick="captureSignWebcam()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold border border-slate-700 transition-all flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-camera text-cobalt-500"></i> Chụp cố định
+            </button>
+            <button type="button" id="btn-reset-webcam" onclick="resetToLiveWebcam()" class="hidden flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold border border-amber-600/50 text-amber-400 transition-all flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-video"></i> Bật lại Camera
+            </button>
+            <label class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold border border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-image text-cobalt-500"></i> Chọn tệp ảnh
+              <input type="file" id="sign-face-file" accept="image/*" class="hidden" onchange="handleSignFaceFile(event)">
+            </label>
+          </div>
+
+          <!-- Execution Button -->
+          <button onclick="executeSignDocument()" id="btn-execute-sign" class="w-full py-3 bg-cobalt-700 hover:bg-cobalt-600 text-white rounded-lg text-xs font-bold tracking-wider uppercase transition-all shadow-md shadow-cobalt-800/30 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-lock text-sm"></i> Xác Thực eKYC & Ký Số Ngay
+          </button>
+
+          <!-- Result Alert Box -->
+          <div id="sign-result-box" class="hidden p-3.5 rounded-lg border text-xs flex flex-col gap-1.5"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: KIỂM TRA TÍNH TOÀN VẸN (VERIFY PDF) ==================== -->
+    <div id="tab-verify-pdf" class="tab-content hidden max-w-3xl mx-auto">
+      <div class="panel-card p-6 flex flex-col gap-5">
+        <div class="border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-cobalt-500"></i> Kiểm Tra Chữ Ký Số & Phát Hiện Giả Mạo PDF
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Hệ thống sẽ đối soát mã băm SHA-256 và giải mã chữ ký số RSA-2048 bằng Khóa công khai của người ký. Nếu file bị chỉnh sửa dù chỉ 1 ký tự, hệ thống sẽ cảnh báo lập tức.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Chọn Tệp PDF Đã Ký Cần Kiểm Tra *</label>
+          <label class="w-full py-8 border-2 border-slate-700 border-dashed rounded-xl bg-slate-900/50 hover:bg-slate-900 flex flex-col items-center justify-center cursor-pointer transition-all">
+            <i class="fa-solid fa-file-circle-check text-3xl text-cobalt-500 mb-2"></i>
+            <span class="text-xs font-bold text-slate-300" id="verify-pdf-filename">Nhấp để tải lên tệp PDF cần thẩm định tính pháp lý</span>
+            <span class="text-[11px] text-slate-500 mt-0.5">Hỗ trợ các file .pdf đã được đóng dấu eKYC</span>
+            <input type="file" id="verify-pdf-input" accept="application/pdf" class="hidden" onchange="handleVerifyPdfUpload(event)">
+          </label>
+        </div>
+
+        <button onclick="runPdfVerification()" class="w-full py-2.5 bg-accentOrange-600 hover:bg-accentOrange-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-md">
+          <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Thẩm Định Toàn Vẹn Văn Bản
+        </button>
+
+        <div id="verify-document-result" class="hidden p-4 rounded-xl border text-xs flex flex-col gap-2"></div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: KHO CON DẤU & CHỮ KÝ ==================== -->
+    <div id="tab-assets" class="tab-content hidden max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Create / Upload Asset -->
+        <div class="md:col-span-5 panel-card p-5 flex flex-col gap-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-plus-circle text-cobalt-500"></i> Thêm Con Dấu / Chữ Ký
+          </h3>
+
+          <form onsubmit="handleCreateAsset(event)" class="flex flex-col gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Gán Cho Người Dùng *</label>
+              <select id="asset-user-id" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+                <!-- User options populated via JS -->
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Loại Đối Tượng *</label>
+              <select id="asset-type" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+                <option value="stamp">Con Dấu Đỏ Doanh Nghiệp (Stamp)</option>
+                <option value="signature">Chữ Ký Tay Điện Tử (Signature)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tên Gọi / Chức Danh *</label>
+              <input type="text" id="asset-title" required placeholder="Ví dụ: Con dấu Giám đốc / Chữ ký nháy" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Vẽ Chữ Ký Trực Tiếp Hoặc Tải Ảnh PNG</label>
+              <div class="border border-slate-700 rounded-lg bg-white overflow-hidden relative">
+                <canvas id="signature-pad" width="300" height="120" class="w-full h-28 cursor-crosshair touch-none"></canvas>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <button type="button" onclick="clearSignaturePad()" class="text-[11px] text-slate-400 hover:text-white">
+                  <i class="fa-solid fa-eraser"></i> Xóa nét vẽ
+                </button>
+                <label class="text-[11px] text-cobalt-500 hover:underline cursor-pointer">
+                  <i class="fa-solid fa-upload"></i> Tải ảnh con dấu/chữ ký từ máy
+                  <input type="file" id="asset-file" accept="image/*" class="hidden" onchange="handleAssetFileUpload(event)">
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-cobalt-700 hover:bg-cobalt-600 text-white rounded-lg text-xs font-bold uppercase transition-all shadow mt-1">
+              <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Vào Cơ Sở Dữ Liệu
+            </button>
+          </form>
+        </div>
+
+        <!-- Asset List -->
+        <div class="md:col-span-7 panel-card p-5 flex flex-col gap-3">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-2">
+            <span><i class="fa-solid fa-folder-open text-accentOrange-500 mr-1.5"></i> Danh Sách Con Dấu & Chữ Ký Đã Lưu</span>
+            <button onclick="loadAssets()" class="text-xs text-slate-400 hover:text-white"><i class="fa-solid fa-rotate"></i></button>
+          </h3>
+          <div id="assets-management-list" class="flex flex-col gap-2.5 max-h-[480px] overflow-y-auto pr-1">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: eKYC & ĐĂNG KÝ ==================== -->
+    <div id="tab-ekyc-scan" class="tab-content hidden max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Enroll Form -->
+        <div class="md:col-span-6 panel-card p-5 flex flex-col gap-4">
+          <div class="border-b border-slate-800 pb-2">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-user-plus text-cobalt-500"></i> Đăng Ký Danh Tính & Cấp Cặp Khóa RSA
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Bước 1: Nhập thông tin • Bước 2: Soi camera & chụp mặt • Bước 3: Lưu & cấp khóa</p>
+          </div>
+
+          <form onsubmit="handleEnroll(event)" class="flex flex-col gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên * <span class="text-[10px] text-slate-500 font-normal">(Tối thiểu 2 ký tự)</span></label>
+              <input type="text" id="reg-name" required minlength="2" placeholder="Ví dụ: Nguyễn Văn Giang" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Số CCCD / CMND</label>
+                <input type="text" id="reg-idcard" placeholder="001201004567" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Phòng Ban / Chức Vụ</label>
+                <input type="text" id="reg-dept" placeholder="Ban Giám Đốc" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs focus:outline-none focus:border-cobalt-600">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Camera Đăng Ký Khuôn Mặt Trực Tiếp *</label>
+              <div class="relative w-full aspect-[4/3] bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center overflow-hidden">
+                <video id="enroll-webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <img id="enroll-preview-img" class="w-full h-full object-contain hidden bg-slate-950" />
+                <div id="enroll-face-badge" class="absolute bottom-2 left-2 bg-slate-900/90 px-2.5 py-1 rounded text-[11px] border border-slate-700 text-slate-300 flex items-center gap-1.5">
+                  <span id="enroll-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                  <span id="enroll-status-text">Đưa khuôn mặt vào chính giữa khung hình</span>
+                </div>
+              </div>
+
+              <div class="flex gap-2 mt-2">
+                <button type="button" onclick="captureFromWebcamForEnroll()" class="flex-1 py-2 bg-cobalt-700 hover:bg-cobalt-600 text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-camera"></i> Chụp Ảnh Chân Dung
+                </button>
+                <button type="button" id="btn-enroll-retake" onclick="resetEnrollCamera()" class="hidden py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold border border-amber-500/40 text-amber-400">
+                  <i class="fa-solid fa-rotate-left"></i> Chụp lại
+                </button>
+                <label class="py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold border border-slate-700 text-center cursor-pointer flex items-center gap-1">
+                  <i class="fa-solid fa-upload text-cobalt-500"></i> Tải ảnh
+                  <input type="file" id="reg-file" accept="image/*" class="hidden" onchange="previewEnroll(event)">
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" id="btn-reg-submit" class="w-full py-2.5 bg-accentOrange-600 hover:bg-accentOrange-500 text-white rounded-lg text-xs font-bold uppercase transition-all shadow mt-1">
+              <i class="fa-solid fa-key mr-1"></i> Xác Nhận Đăng Ký & Sinh Khóa RSA-2048
+            </button>
+            <div id="enroll-msg" class="hidden p-2.5 rounded text-xs"></div>
+          </form>
+        </div>
+
+        <!-- Users Directory -->
+        <div class="md:col-span-6 panel-card p-5 flex flex-col gap-3">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-2">
+            <span><i class="fa-solid fa-users text-accentOrange-500 mr-1.5"></i> Danh Bạ Người Ký Đã Đăng Ký</span>
+            <button onclick="loadUsersList()" class="text-xs text-slate-400 hover:text-white" title="Làm mới danh sách"><i class="fa-solid fa-rotate"></i></button>
+          </h3>
+          <div id="users-directory-list" class="flex flex-col gap-2.5 max-h-[540px] overflow-y-auto pr-1">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 5: NHẬT KÝ KÝ SỐ ==================== -->
+    <div id="tab-audit-logs" class="tab-content hidden max-w-5xl mx-auto">
+      <div class="panel-card p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-cobalt-500"></i> Nhật Ký Kiểm Toán Ký Số (Audit Trail)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Bằng chứng pháp lý về mọi văn bản đã được đóng dấu & ký số qua eKYC</p>
+          </div>
+          <button onclick="loadAuditLogs()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-medium border border-slate-700">
+            <i class="fa-solid fa-rotate mr-1"></i> Làm mới
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3">Tài liệu</th>
+                <th class="py-2.5 px-3">Người Ký</th>
+                <th class="py-2.5 px-3">Thời gian</th>
+                <th class="py-2.5 px-3">Mã Băm SHA-256</th>
+                <th class="py-2.5 px-3">Trạng thái</th>
+                <th class="py-2.5 px-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-table-body" class="divide-y divide-slate-800/60">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // State
+    let currentTab = 'sign-pdf';
+    let usersList = [];
+    let assetsList = [];
+    let selectedAssetId = null;
+    let selectedPdfBase64 = null;
+    let signWebcamStream = null;
+    let enrollFaceBase64 = null;
+
+    // Elements
+    const signVideo = document.getElementById('sign-webcam');
+    const signPreview = document.getElementById('sign-webcam-preview');
+    const enrollVideo = document.getElementById('enroll-webcam');
+    const enrollPreviewImg = document.getElementById('enroll-preview-img');
+    let enrollFaceValid = false;
+
+    async function safeJson(resp) {
+      const text = await resp.text();
+      if (!text) {
+        throw new Error(`Máy chủ không phản hồi dữ liệu (HTTP ${resp.status})`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Phản hồi không hợp lệ từ máy chủ (${text.substring(0, 80)})`);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initSignaturePad();
+      await startSignWebcam();
+      await loadUsersList();
+      await loadAssets();
+      await loadAuditLogs();
+      loadSampleContract();
+    });
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active', 'bg-cobalt-700', 'text-white', 'shadow-sm');
+        b.classList.add('text-slate-300', 'hover:bg-slate-800');
+      });
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-cobalt-700', 'text-white', 'shadow-sm');
+        activeBtn.classList.remove('text-slate-300', 'hover:bg-slate-800');
+      }
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      if (tabId === 'ekyc-scan' && signWebcamStream && enrollVideo) {
+        enrollVideo.srcObject = signWebcamStream;
+        enrollVideo.play().catch(() => {});
+      }
+      if (tabId === 'audit-logs') loadAuditLogs();
+      if (tabId === 'assets') loadAssets();
+    }
+
+    // Webcam for Signing & Live Tracking
+    let liveTrackingTimer = null;
+    let isTrackingBusy = false;
+
+    async function startSignWebcam() {
+      try {
+        signWebcamStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+        });
+        signVideo.srcObject = signWebcamStream;
+        if (enrollVideo) enrollVideo.srcObject = signWebcamStream;
+        signPreview.classList.add('hidden');
+        signVideo.classList.remove('hidden');
+        document.getElementById('btn-reset-webcam').classList.add('hidden');
+        
+        signVideo.onloadedmetadata = () => {
+          signVideo.play();
+          startLiveFaceTracking();
+        };
+      } catch (err) {
+        console.warn("Webcam not available:", err);
+        document.getElementById('ekyc-auth-badge').textContent = 'Chế độ tệp ảnh (Webcam không khả dụng)';
+      }
+    }
+
+    function getLiveWebcamSnapshot(videoEl = signVideo) {
+      if (!videoEl || videoEl.videoWidth === 0) return null;
+      const c = document.createElement('canvas');
+      c.width = videoEl.videoWidth;
+      c.height = videoEl.videoHeight;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.95);
+    }
+
+    function captureSignWebcam() {
+      const b64 = getLiveWebcamSnapshot();
+      if (!b64) {
+        alert("Camera chưa sẵn sàng hoặc không thể chụp ảnh!");
+        return;
+      }
+      signPreview.src = b64;
+      signPreview.classList.remove('hidden');
+      signVideo.classList.add('hidden');
+      document.getElementById('btn-reset-webcam').classList.remove('hidden');
+      
+      // Clear overlay when paused
+      const canvas = document.getElementById('sign-webcam-overlay');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function resetToLiveWebcam() {
+      signPreview.classList.add('hidden');
+      signVideo.classList.remove('hidden');
+      document.getElementById('btn-reset-webcam').classList.add('hidden');
+    }
+
+    function handleSignFaceFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = (evt) => {
+        signPreview.src = evt.target.result;
+        signPreview.classList.remove('hidden');
+        signVideo.classList.add('hidden');
+        document.getElementById('btn-reset-webcam').classList.remove('hidden');
+        
+        const canvas = document.getElementById('sign-webcam-overlay');
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      };
+      r.readAsDataURL(file);
+    }
+
+    function startLiveFaceTracking() {
+      if (liveTrackingTimer) clearInterval(liveTrackingTimer);
+      liveTrackingTimer = setInterval(async () => {
+        if (isTrackingBusy) return;
+        const signTab = document.getElementById('tab-sign-pdf');
+        if (signTab && signTab.classList.contains('hidden')) return;
+        if (!signVideo || signVideo.videoWidth === 0 || signVideo.paused || signVideo.classList.contains('hidden')) return;
+
+        isTrackingBusy = true;
+        try {
+          const c = document.createElement('canvas');
+          const scale = 320 / Math.max(signVideo.videoWidth, 320);
+          c.width = signVideo.videoWidth * scale;
+          c.height = signVideo.videoHeight * scale;
+          c.getContext('2d').drawImage(signVideo, 0, 0, c.width, c.height);
+          const miniB64 = c.toDataURL('image/jpeg', 0.70);
+
+          const targetUserId = document.getElementById('select-signer-user').value;
+
+          const res = await fetch('/api/scan_live', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              image_base64: miniB64,
+              target_user_id: targetUserId
+            })
+          });
+          const data = await safeJson(res);
+          drawTrackingBox(data, signVideo.videoWidth, signVideo.videoHeight);
+        } catch (e) {
+          // ignore loop transient errors
+        } finally {
+          isTrackingBusy = false;
+        }
+      }, 350);
+    }
+
+    function drawTrackingBox(data, vidW, vidH) {
+      const canvas = document.getElementById('sign-webcam-overlay');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.clientWidth || 400;
+      canvas.height = canvas.clientHeight || 300;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const badge = document.getElementById('ekyc-auth-badge');
+      const dot = document.getElementById('ekyc-auth-dot');
+
+      if (!data || !data.success || data.faces_detected === 0) {
+        if (badge) badge.textContent = "Hướng mặt vào camera để nhận diện";
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-slate-500 animate-pulse";
+        return;
+      }
+
+      const [bx, by, bw, bh] = data.bbox;
+      const imgW = data.image_width || 320;
+      const imgH = data.image_height || 240;
+      const scaleX = canvas.width / imgW;
+      const scaleY = canvas.height / imgH;
+
+      const x = bx * scaleX;
+      const y = by * scaleY;
+      const w = bw * scaleX;
+      const h = bh * scaleY;
+
+      const isMatch = (data.status === "MATCHED");
+      const color = isMatch ? "#10B981" : "#EA580C"; // Emerald or Orange
+
+      // Bounding box
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = color;
+      ctx.strokeRect(x, y, w, h);
+
+      // Corner brackets for high-tech aesthetic
+      const bracketLen = Math.min(w, h) * 0.25;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(x, y + bracketLen); ctx.lineTo(x, y); ctx.lineTo(x + bracketLen, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + w - bracketLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + bracketLen); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + h - bracketLen); ctx.lineTo(x, y + h); ctx.lineTo(x + bracketLen, y + h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + w - bracketLen, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - bracketLen); ctx.stroke();
+
+      // Tag Label
+      const tagText = isMatch 
+        ? `✔ ${data.user_name} (${data.match_percentage}%)` 
+        : `⚠ ${data.match_percentage ? data.match_percentage + '%' : 'Chưa khớp'}`;
+      ctx.font = "bold 11px system-ui, sans-serif";
+      const txtWidth = ctx.measureText(tagText).width;
+      ctx.fillStyle = isMatch ? "rgba(6, 78, 59, 0.9)" : "rgba(124, 45, 18, 0.9)";
+      ctx.fillRect(x, Math.max(0, y - 22), txtWidth + 12, 20);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(tagText, x + 6, Math.max(14, y - 8));
+
+      // Badge status
+      if (isMatch) {
+        if (badge) badge.textContent = `Đã nhận diện: ${data.user_name} (${data.match_percentage}%) - Sẵn sàng ký số!`;
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+      } else {
+        if (badge) badge.textContent = `Chưa khớp người ký đã chọn (${data.match_percentage}%)`;
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-accentOrange-500 animate-pulse";
+      }
+    }
+
+    // PDF Management
+    async function loadSampleContract() {
+      try {
+        const resp = await fetch('/api/sample/sample_contract.pdf');
+        const blob = await resp.blob();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          selectedPdfBase64 = e.target.result;
+          document.getElementById('pdf-file-label').textContent = 'Hợp Đồng Mẫu: sample_contract.pdf';
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error("Error loading sample contract:", err);
+      }
+    }
+
+    function handlePdfUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('pdf-file-label').textContent = file.name;
+      const r = new FileReader();
+      r.onload = (evt) => {
+        selectedPdfBase64 = evt.target.result;
+      };
+      r.readAsDataURL(file);
+    }
+
+    // User Directory & Assets
+    async function loadUsersList() {
+      try {
+        const resp = await fetch('/api/identities');
+        const data = await safeJson(resp);
+        if (data.success && data.identities) {
+          usersList = data.identities;
+          
+          // Select dropdowns
+          const selectSigner = document.getElementById('select-signer-user');
+          const selectAssetUser = document.getElementById('asset-user-id');
+          selectSigner.innerHTML = '';
+          selectAssetUser.innerHTML = '';
+
+          usersList.forEach(u => {
+            const opt1 = document.createElement('option');
+            opt1.value = u.id;
+            opt1.textContent = `${u.name} (CCCD: ${u.id_card || 'N/A'}) - ${u.department || 'Nhân sự'}`;
+            selectSigner.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = u.id;
+            opt2.textContent = `${u.name} (${u.department || 'N/A'})`;
+            selectAssetUser.appendChild(opt2);
+          });
+
+          // Users Directory View
+          const dirList = document.getElementById('users-directory-list');
+          dirList.innerHTML = '';
+          if (usersList.length === 0) {
+            dirList.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">Chưa có người dùng nào được đăng ký. Hãy đăng ký ở biểu mẫu bên cạnh.</div>';
+          }
+          usersList.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between gap-2';
+            item.innerHTML = `
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700 shrink-0">
+                  ${u.avatar_file ? `<img src="/avatars/${u.avatar_file}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-user text-slate-500"></i>'}
+                </div>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-bold text-white truncate">${u.name}</h4>
+                  <p class="text-[11px] text-slate-400 truncate">CCCD: ${u.id_card || 'Chưa có'} • ${u.department || 'Chung'}</p>
+                  <p class="text-[10px] text-slate-500">ID: ${u.id} • ${u.created_at || ''}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cobalt-700/20 text-cobalt-400 border border-cobalt-600/30">RSA-2048</span>
+                <button type="button" onclick="deleteIdentity('${u.id}', '${u.name.replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 border border-rose-500/30 text-[11px]" title="Xóa danh tính này">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            `;
+            dirList.appendChild(item);
+          });
+
+          renderAssetsGrid();
+        }
+      } catch (err) {
+        console.error("Error loading users:", err);
+      }
+    }
+
+    async function deleteAsset(assetId) {
+      if (!confirm("Xóa con dấu/chữ ký này?")) return;
+      try {
+        const res = await fetch(`/api/assets/${assetId}`, { method: 'DELETE' });
+        const data = await safeJson(res);
+        if (data.success) await loadAssets();
+      } catch (e) {
+        alert("Lỗi xóa tài sản: " + e.message);
+      }
+    }
+
+    async function loadAssets() {
+      try {
+        const resp = await fetch('/api/assets');
+        const data = await safeJson(resp);
+        if (data.success && data.assets) {
+          assetsList = data.assets;
+          renderAssetsGrid();
+
+          const mList = document.getElementById('assets-management-list');
+          mList.innerHTML = '';
+          if (assetsList.length === 0) {
+            mList.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">Chưa có con dấu/chữ ký nào được tạo.</div>';
+          }
+          assetsList.forEach(a => {
+            const row = document.createElement('div');
+            row.className = 'p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between gap-2';
+            row.innerHTML = `
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-14 h-10 rounded bg-white p-1 flex items-center justify-center border border-slate-700 shrink-0">
+                  <img src="${a.image_path}" class="max-h-full max-w-full object-contain">
+                </div>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-bold text-white truncate">${a.title}</h4>
+                  <p class="text-[11px] text-slate-400 truncate">Chủ sở hữu: <strong class="text-slate-200">${a.user_name}</strong> • Loại: ${a.asset_type === 'stamp' ? 'Con dấu đỏ' : 'Chữ ký tay'}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] text-slate-500 hidden sm:inline">${a.created_at}</span>
+                <button type="button" onclick="deleteAsset('${a.id}')" class="p-1.5 rounded bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 border border-rose-500/30 text-[11px]" title="Xóa">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            `;
+            mList.appendChild(row);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading assets:", err);
+      }
+    }
+
+    function onSignerChange() {
+      renderAssetsGrid();
+    }
+
+    function renderAssetsGrid() {
+      const container = document.getElementById('assets-selection-grid');
+      container.innerHTML = '';
+      const currentUserId = document.getElementById('select-signer-user').value;
+      const userAssets = assetsList.filter(a => a.user_id === currentUserId);
+
+      if (userAssets.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-500 col-span-3 py-3 text-center">Người này chưa có con dấu/chữ ký riêng. (Sẽ dùng con dấu mặc định của hệ thống)</p>';
+        selectedAssetId = 'default';
+        return;
+      }
+
+      userAssets.forEach((asset, idx) => {
+        const card = document.createElement('div');
+        const isSelected = (selectedAssetId === asset.id) || (idx === 0 && !selectedAssetId);
+        if (isSelected) selectedAssetId = asset.id;
+
+        card.className = `p-2.5 rounded-lg border cursor-pointer transition-all flex flex-col items-center gap-1.5 ${
+          isSelected 
+            ? 'bg-cobalt-900/40 border-cobalt-600 shadow-sm shadow-cobalt-700/20' 
+            : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+        }`;
+        card.onclick = () => {
+          selectedAssetId = asset.id;
+          renderAssetsGrid();
+        };
+        card.innerHTML = `
+          <div class="w-full h-14 bg-white rounded p-1 flex items-center justify-center">
+            <img src="${asset.image_path}" class="max-h-full max-w-full object-contain">
+          </div>
+          <span class="text-[11px] font-bold text-slate-200 truncate w-full text-center">${asset.title}</span>
+          <span class="text-[10px] text-slate-400">${asset.asset_type === 'stamp' ? 'Con dấu' : 'Chữ ký'}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Execute Digital Sign Document
+    async function executeSignDocument() {
+      const userId = document.getElementById('select-signer-user').value;
+      if (!userId) {
+        alert("Vui lòng chọn người ký!");
+        return;
+      }
+
+      // Grab Face snapshot for eKYC: Priority to uploaded file if preview is shown, otherwise live camera snapshot
+      let faceB64 = null;
+      if (!signPreview.classList.contains('hidden') && signPreview.src && signPreview.src.startsWith('data:image')) {
+        faceB64 = signPreview.src;
+      } else {
+        faceB64 = getLiveWebcamSnapshot();
+      }
+
+      if (!faceB64) {
+        alert("Không thể chụp khuôn mặt từ webcam! Vui lòng cho phép quyền truy cập camera hoặc chọn tệp ảnh selfie.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-execute-sign');
+      const resBox = document.getElementById('sign-result-box');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực eKYC & Ký số RSA-2048...';
+      resBox.classList.remove('hidden');
+      resBox.className = 'p-3.5 rounded-lg border border-slate-700 bg-slate-900 text-xs text-slate-300 flex items-center gap-2';
+      resBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-cobalt-500"></i> Đang đối soát khuôn mặt với cơ sở dữ liệu sinh trắc học...';
+
+      const payload = {
+        user_id: userId,
+        asset_id: selectedAssetId || 'default',
+        face_image_base64: faceB64,
+        pdf_base64: selectedPdfBase64,
+        page_number: parseInt(document.getElementById('coord-page').value) || 1,
+        pos_x: parseFloat(document.getElementById('coord-x').value) || 380,
+        pos_y: parseFloat(document.getElementById('coord-y').value) || 420,
+        width: parseFloat(document.getElementById('coord-w').value) || 140,
+        height: parseFloat(document.getElementById('coord-h').value) || 70
+      };
+
+      try {
+        const resp = await fetch('/api/documents/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const res = await safeJson(resp);
+
+        if (res.success) {
+          resBox.className = 'p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 flex flex-col gap-2';
+          resBox.innerHTML = `
+            <div class="flex items-center gap-2 font-bold text-sm text-emerald-400">
+              <i class="fa-solid fa-circle-check text-base"></i> KÝ SỐ VĂN BẢN THÀNH CÔNG!
+            </div>
+            <p class="text-xs text-slate-300">${res.message}</p>
+            <div class="text-[11px] text-slate-400 font-mono bg-slate-900/80 p-2 rounded border border-slate-800 break-all">
+              <div>SHA-256: <strong class="text-slate-200">${res.signed_sha256}</strong></div>
+              <div>RSA Signature: <strong class="text-slate-200">${res.crypto_signature_hex}</strong></div>
+            </div>
+            <a href="${res.download_url}" target="_blank" download class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-center font-bold text-xs uppercase transition-all shadow mt-1">
+              <i class="fa-solid fa-download mr-1"></i> Tải Về Tệp PDF Đã Ký Số
+            </a>
+          `;
+          loadAuditLogs();
+        } else {
+          resBox.className = 'p-3.5 rounded-lg border border-rose-500/40 bg-rose-950/20 text-rose-300 flex flex-col gap-1.5';
+          resBox.innerHTML = `
+            <div class="flex items-center gap-2 font-bold text-sm text-rose-400">
+              <i class="fa-solid fa-triangle-exclamation"></i> KÝ SỐ THẤT BẠI
+            </div>
+            <p class="text-xs text-slate-300">${res.message}</p>
+          `;
+        }
+      } catch (err) {
+        resBox.className = 'p-3.5 rounded-lg border border-rose-500/40 bg-rose-950/20 text-rose-300';
+        resBox.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Lỗi hệ thống: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock text-sm"></i> Xác Thực eKYC & Ký Số Ngay';
+      }
+    }
+
+    // PDF Tamper Verification
+    let verifyPdfBase64 = null;
+    function handleVerifyPdfUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('verify-pdf-filename').textContent = `Tệp đã chọn: ${file.name}`;
+      const r = new FileReader();
+      r.onload = (evt) => {
+        verifyPdfBase64 = evt.target.result;
+      };
+      r.readAsDataURL(file);
+    }
+
+    async function runPdfVerification() {
+      if (!verifyPdfBase64) {
+        alert("Vui lòng tải lên tệp PDF cần thẩm định!");
+        return;
+      }
+      const resBox = document.getElementById('verify-document-result');
+      resBox.classList.remove('hidden');
+      resBox.className = 'p-4 rounded-xl border border-slate-700 bg-slate-900 text-xs flex items-center justify-center gap-2';
+      resBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-cobalt-500"></i> Đang tính toán mã băm SHA-256 và đối soát chữ ký RSA...';
+
+      try {
+        const resp = await fetch('/api/documents/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf_base64: verifyPdfBase64 })
+        });
+        const res = await safeJson(resp);
+
+        if (res.valid) {
+          resBox.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 flex flex-col gap-2';
+          resBox.innerHTML = `
+            <div class="flex items-center gap-2 text-sm font-bold text-emerald-400">
+              <i class="fa-solid fa-shield-check text-base"></i> TÀI LIỆU TOÀN VẸN & HỢP LỆ (VERIFIED)
+            </div>
+            <p class="text-xs text-slate-300">${res.message}</p>
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 mt-1">
+              <div>Người ký: <strong class="text-white">${res.signer_name}</strong></div>
+              <div>Số CCCD: <strong class="text-white">${res.id_card || 'Đã chứng thực'}</strong></div>
+              <div>Thời gian ký: <strong class="text-white">${res.signed_at || 'Đã ghi nhận'}</strong></div>
+              <div>Mã băm: <strong class="text-white font-mono text-[10px]">${(res.sha256 || '').substring(0, 24)}...</strong></div>
+            </div>
+          `;
+        } else {
+          resBox.className = 'p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 text-rose-300 flex flex-col gap-2';
+          resBox.innerHTML = `
+            <div class="flex items-center gap-2 text-sm font-bold text-rose-400">
+              <i class="fa-solid fa-triangle-exclamation text-base"></i> PHÁT HIỆN GIẢ MẠO / SỬA ĐỔI (TAMPERED)
+            </div>
+            <p class="text-xs text-slate-300">${res.message || 'Tài liệu không khớp chữ ký số ban đầu.'}</p>
+          `;
+        }
+      } catch (err) {
+        resBox.className = 'p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 text-rose-300';
+        resBox.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Lỗi thẩm định: ${err.message}`;
+      }
+    }
+
+    // Signature Pad
+    let sigCanvas, sigCtx, isDrawing = false;
+    function initSignaturePad() {
+      sigCanvas = document.getElementById('signature-pad');
+      sigCtx = sigCanvas.getContext('2d');
+      sigCtx.strokeStyle = '#1e3a8a';
+      sigCtx.lineWidth = 2.5;
+      sigCtx.lineCap = 'round';
+
+      sigCanvas.addEventListener('mousedown', (e) => { isDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); });
+      sigCanvas.addEventListener('mousemove', (e) => { if (isDrawing) { sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); } });
+      sigCanvas.addEventListener('mouseup', () => isDrawing = false);
+      sigCanvas.addEventListener('mouseleave', () => isDrawing = false);
+    }
+
+    function clearSignaturePad() {
+      sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    }
+
+    let uploadedAssetB64 = null;
+    function handleAssetFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = (evt) => {
+        uploadedAssetB64 = evt.target.result;
+        const img = new Image();
+        img.onload = () => {
+          sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+          sigCtx.drawImage(img, 10, 10, sigCanvas.width - 20, sigCanvas.height - 20);
+        };
+        img.src = uploadedAssetB64;
+      };
+      r.readAsDataURL(file);
+    }
+
+    async function handleCreateAsset(e) {
+      e.preventDefault();
+      const userId = document.getElementById('asset-user-id').value;
+      const type = document.getElementById('asset-type').value;
+      const title = document.getElementById('asset-title').value.trim();
+      const imgB64 = sigCanvas.toDataURL('image/png');
+
+      const formData = new FormData();
+      formData.append('user_id', userId);
+      formData.append('asset_type', type);
+      formData.append('title', title);
+      formData.append('image_base64', imgB64);
+
+      try {
+        const resp = await fetch('/api/assets/create', { method: 'POST', body: formData });
+        const res = await safeJson(resp);
+        if (res.success) {
+          alert("Lưu trữ thành công con dấu/chữ ký!");
+          clearSignaturePad();
+          document.getElementById('asset-title').value = '';
+          await loadAssets();
+        } else {
+          alert("Lỗi: " + res.message);
+        }
+      } catch (err) {
+        alert("Lỗi: " + err.message);
+      }
+    }
+
+    // Enrollment with immediate face validation
+    async function validateAndShowEnrollFace(b64) {
+      const dot = document.getElementById('enroll-dot');
+      const statusText = document.getElementById('enroll-status-text');
+      const msgBox = document.getElementById('enroll-msg');
+      
+      dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+      statusText.textContent = "Đang kiểm tra nhận diện khuôn mặt...";
+      enrollFaceBase64 = b64;
+      enrollFaceValid = false;
+
+      // Show captured frame immediately
+      enrollPreviewImg.src = b64;
+      enrollPreviewImg.classList.remove('hidden');
+      if (enrollVideo) enrollVideo.classList.add('hidden');
+      document.getElementById('btn-enroll-retake').classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/check_face', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_base64: b64 })
+        });
+        const data = await safeJson(res);
+        if (data.success) {
+          enrollFaceValid = true;
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+          statusText.innerHTML = `<span class="text-emerald-400 font-bold">✔ Khuôn mặt hợp lệ! (Độ nét ${(data.score * 100).toFixed(0)}%)</span>`;
+          if (data.cropped_face_base64) {
+            enrollPreviewImg.src = data.cropped_face_base64;
+          }
+          msgBox.classList.add('hidden');
+        } else {
+          enrollFaceValid = false;
+          dot.className = "w-2 h-2 rounded-full bg-rose-500";
+          statusText.innerHTML = `<span class="text-rose-400 font-bold">✖ ${data.message}</span>`;
+        }
+      } catch (err) {
+        enrollFaceValid = false;
+        dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        statusText.textContent = "Lỗi kiểm tra khuôn mặt: " + err.message;
+      }
+    }
+
+    function captureFromWebcamForEnroll() {
+      const vid = (enrollVideo && enrollVideo.videoWidth > 0) ? enrollVideo : signVideo;
+      const b64 = getLiveWebcamSnapshot(vid);
+      if (!b64) {
+        alert("Camera chưa sẵn sàng! Hãy cấp quyền camera hoặc dùng nút Tải ảnh.");
+        return;
+      }
+      validateAndShowEnrollFace(b64);
+    }
+
+    function resetEnrollCamera() {
+      enrollFaceBase64 = null;
+      enrollFaceValid = false;
+      enrollPreviewImg.classList.add('hidden');
+      if (enrollVideo) {
+        enrollVideo.classList.remove('hidden');
+        if (signWebcamStream) enrollVideo.srcObject = signWebcamStream;
+        enrollVideo.play().catch(() => {});
+      }
+      document.getElementById('btn-enroll-retake').classList.add('hidden');
+      document.getElementById('enroll-dot').className = "w-2 h-2 rounded-full bg-slate-500";
+      document.getElementById('enroll-status-text').textContent = "Đưa khuôn mặt vào chính giữa khung hình";
+    }
+
+    function previewEnroll(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = (evt) => {
+        validateAndShowEnrollFace(evt.target.result);
+      };
+      r.readAsDataURL(file);
+    }
+
+    async function deleteIdentity(userId, userName) {
+      if (!confirm(`Bạn có chắc muốn xóa danh tính "${userName}" và khóa RSA đi kèm?`)) return;
+      try {
+        const res = await fetch(`/api/identities/${userId}`, { method: 'DELETE' });
+        const data = await safeJson(res);
+        if (data.success) {
+          await loadUsersList();
+          await loadAssets();
+        } else {
+          alert(data.message || "Không thể xóa danh tính.");
+        }
+      } catch (err) {
+        alert("Lỗi khi xóa: " + err.message);
+      }
+    }
+
+    async function handleEnroll(e) {
+      e.preventDefault();
+      if (!enrollFaceBase64) {
+        alert("Vui lòng chụp ảnh chân dung từ camera hoặc tải ảnh lên trước!");
+        return;
+      }
+      if (!enrollFaceValid) {
+        alert("Ảnh hiện tại không có khuôn mặt hợp lệ! Hãy bấm 'Chụp lại' và nhìn thẳng vào camera.");
+        return;
+      }
+
+      const name = document.getElementById('reg-name').value.trim();
+      if (name.length < 2) {
+        alert("Vui lòng nhập họ và tên đầy đủ (tối thiểu 2 ký tự)!");
+        return;
+      }
+
+      const btn = document.getElementById('btn-reg-submit');
+      const msgBox = document.getElementById('enroll-msg');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang trích xuất vector & sinh khóa RSA...';
+
+      try {
+        const resp = await fetch('/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            id_card: document.getElementById('reg-idcard').value.trim(),
+            department: document.getElementById('reg-dept').value.trim() || 'Thành viên',
+            image_base64: enrollFaceBase64,
+            allow_lenient_liveness: true
+          })
+        });
+        const res = await safeJson(resp);
+        msgBox.classList.remove('hidden');
+        if (res.success) {
+          msgBox.className = 'p-2.5 rounded text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+          msgBox.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> ${res.message}. Đã cấp cặp khóa RSA-2048!`;
+          document.getElementById('reg-name').value = '';
+          document.getElementById('reg-idcard').value = '';
+          document.getElementById('reg-dept').value = '';
+          resetEnrollCamera();
+          await loadUsersList();
+          
+          // Auto select newly registered user in Signing tab
+          if (res.user && res.user.id) {
+            const selectSigner = document.getElementById('select-signer-user');
+            if (selectSigner) {
+              selectSigner.value = res.user.id;
+              onSignerChange();
+            }
+          }
+        } else {
+          msgBox.className = 'p-2.5 rounded text-xs bg-rose-500/20 text-rose-400 border border-rose-500/30';
+          msgBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${res.message}`;
+        }
+      } catch (err) {
+        msgBox.classList.remove('hidden');
+        msgBox.className = 'p-2.5 rounded text-xs bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        msgBox.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Lỗi kết nối: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-key mr-1"></i> Xác Nhận Đăng Ký & Sinh Khóa RSA-2048';
+      }
+    }
+
+    // Audit Logs
+    async function loadAuditLogs() {
+      try {
+        const resp = await fetch('/api/documents');
+        const data = await safeJson(resp);
+        if (data.success && data.documents) {
+          const tbody = document.getElementById('audit-logs-table-body');
+          tbody.innerHTML = '';
+          if (data.documents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-500">Chưa có văn bản nào được ký số.</td></tr>';
+            return;
+          }
+          data.documents.forEach(doc => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-900/40 transition-colors';
+            tr.innerHTML = `
+              <td class="py-2.5 px-3 font-semibold text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-file-pdf text-rose-500"></i> ${doc.document_name}
+              </td>
+              <td class="py-2.5 px-3 text-slate-200">${doc.signer_name}</td>
+              <td class="py-2.5 px-3 text-slate-400 text-[11px]">${doc.signed_at}</td>
+              <td class="py-2.5 px-3 font-mono text-[10px] text-slate-400">${doc.signed_sha256.substring(0, 16)}...</td>
+              <td class="py-2.5 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">HỢP LỆ</span>
+              </td>
+              <td class="py-2.5 px-3 text-right">
+                <a href="${doc.signed_pdf_path}" target="_blank" download class="text-cobalt-500 hover:text-cobalt-400 font-semibold text-xs">
+                  <i class="fa-solid fa-download"></i> Tải về
+                </a>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading audit logs:", err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">eKYC Digital Signature</string>
+    <string name="security_tamper_warning">Cảnh báo: Phát hiện can thiệp môi trường hoặc chữ ký APK không hợp lệ!</string>
+    <string name="security_frida_warning">Phát hiện công cụ hook (Frida / Xposed). Ứng dụng tự động khóa an toàn!</string>
+</resources>
+

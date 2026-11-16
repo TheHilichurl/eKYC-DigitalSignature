@@ -1,0 +1,19 @@
+{
+  "doc_id": "bae0c4a7-9c4",
+  "document_name": "signed_doc_gg_177dde50.pdf",
+  "signer_name": "GG",
+  "id_card": "124325235",
+  "signed_at": "2026-11-11 20:51:55",
+  "audit_note": "Xác thực sinh trắc học eKYC thành công lúc ",
+  "original_sha256": "f060107565b4ab21b4b63d2f12c773fee030581a0ba6299e334f791c6ca24a09",
+  "signed_sha256": "63294e10c966bc1b9b80b2e4340c5b34af80488cd5b30d17913421b23039261e",
+  "crypto_signature_hex": "0ae966d55fc7e6118f541dc7290bb1a61446fc34c53b0c83ced6de6dc2c7504198b003305fcbd52edfd7230de500e50e27cabedafce4a3ee233584437bea027be212a012728a5afe8dc665e26c5280919e4c3664d4c95c1a542a3631d157d199c881b3696eba805a5f2e90fcfded6a79cfedb07b9349f4c41574a8aec6c333a44fbe06be4ef952ae925133cafbee4082e24f0de47f2b6cb3d81795332d82351e4a63e56459e9120e8af5a6b29fdb47f8bf385713f50aa1f0c49782da33ebf99b0ceed519acca1eb14df121c637dcda0319a01a9b6ab46a014b2a457ac4ebf66c723dd60708ee2ac509cf3b13699627402b61c371e1d8cc84325af36eefa43aea",
+  "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoua9wURoABnSa8cY9zZ5\n+LvZmj1erhpgUV5fR3pEQL3c+pBVvxYO2dVaa8XUDO3msLuaM8l8X6SrzfcACggd\n08pWad9x8bTzXClVfBS7xxekCF8hqCcjADxnLfcMbl5TpZHHodg/B59H/1yEbYNS\n41fXQ4VSUFWxDhsEZFSd/anAKlvRpMyq+bjL/cC1oaUPSXifttk4v9yiykBufix/\nxb+4B0lq9CY8ESwoyO7KLeqDiUpHV7BDBwtbHe7coekodL+GBgH5nKwzb4uQQhVL\n8Tayo7Rxg+JdyMeYeqKMH3DonYaBQ/razqmC8FIEvpZQ0IPlfHVP4XwsK/Kc8rJY\nGQIDAQAB\n-----END PUBLIC KEY-----\n",
+  "stamp_position": {
+    "page": 1,
+    "x": 380.0,
+    "y": 420.0,
+    "width": 140.0,
+    "height": 70.0
+  }
+}

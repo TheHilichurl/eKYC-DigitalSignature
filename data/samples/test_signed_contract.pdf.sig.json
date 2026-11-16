@@ -1,0 +1,19 @@
+{
+  "doc_id": "b0dac1d8-a0e",
+  "document_name": "test_signed_contract.pdf",
+  "signer_name": "Nguyen Van Giang",
+  "id_card": "001201004567",
+  "signed_at": "2026-11-11 22:41:50",
+  "audit_note": "Verified by eKYC Biometrics",
+  "original_sha256": "f060107565b4ab21b4b63d2f12c773fee030581a0ba6299e334f791c6ca24a09",
+  "signed_sha256": "d9beba47bb70ff77d8c60f5c58fb172c204ab0e1edf9da6554e4d014796933c3",
+  "crypto_signature_hex": "959e632ee75daaecc4100889a53df0d9a2a86e17e76a88e59aef38fcb429658410151c3a4350491af309888f940c5c3a84c7fcbd01bff0a25a2b27d6f118bb76e021d229253a8ef7021983462d9c73c61af4c0a49a84ae067d46115ead346d4f51122bb3f385312f44d746f830a243d67a213c240e833da34b48730489f9d4ee295d8ba8e09223cf12f0370829588c9e76f66b4ad850ec339239ee49563d67741681555c2612e6dec286ca4e16ed439b4c4d3551d5fd1aeccd0b04c7903b5e358059d6a51870a9916b5de374ebd17a010f1cd4088833406602081b4e9ed472d942a896e03493d5873d0b1932b132c9e6c20938dceba69ec01769ad592bb9eb3e",
+  "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5ZaEWt1bWf79oz6dqaA8\nHWA2M0V8Zttjy21/EoZK4X1lbrRfYNsv3BArwz9+KmXnpTCIMPK2KtJ6RyUjSMTh\n0PHGOdnI2tkVaB6sNIF4IxCYFmJIhboexYErva6mqwzKkbebLwyrrXo5Z8BRfd+J\nwgtuNzfPMtNPa2NqOQD9b7jVJke86MiuMYuuenaM2c9EL9ibQ66yHj1irMwyzsA4\n+gp8UOVSaCNmqCi2KQlHOBvG+PoHFwg3i6aqM5iOe2lN3APOTsX9VtSGJbBaWH2e\nF/lJwRlwZHdrhRu+ynowQ9ok+gFJYhkCKC8zcJgAfMD8Ha2+6mk3IKmbEwzD+0hc\nqQIDAQAB\n-----END PUBLIC KEY-----\n",
+  "stamp_position": {
+    "page": 1,
+    "x": 380,
+    "y": 420,
+    "width": 150,
+    "height": 150
+  }
+}

@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Android build intermediates
+android/eKYC_DigitalSignature_unsigned.apk
+android/eKYC_DigitalSignature_aligned.apk
+android/app_src/build/
+android/tools/bin/
+android/tmp_*/
+
+# Temporary test databases and test outputs
+data/test_*.db
+data/test_bio_tmp/
+data/signed_docs/temp_*
